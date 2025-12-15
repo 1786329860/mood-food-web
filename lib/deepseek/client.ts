@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// 创建DeepSeek API客户端
 const deepseekClient = axios.create({
   baseURL: 'https://api.deepseek.com/v1',
   headers: {
@@ -14,90 +13,58 @@ interface DeepSeekMessage {
   content: string;
 }
 
-interface DeepSeekChatRequest {
-  model: string;
-  messages: DeepSeekMessage[];
-  temperature?: number;
-  max_tokens?: number;
-  top_p?: number;
-  frequency_penalty?: number;
-  presence_penalty?: number;
-}
-
-interface DeepSeekChatResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: DeepSeekMessage;
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
-/**
- * 调用DeepSeek API进行聊天
- * @param messages 消息历史
- * @param model 使用的模型，默认为deepseek-chat
- * @returns AI回复的内容
- */
-export async function chatWithDeepSeek(
-  messages: DeepSeekMessage[],
-  model: string = 'deepseek-chat'
-): Promise<string> {
+export async function chatWithDeepSeek(messages: DeepSeekMessage[], model: string = 'deepseek-chat'): Promise<string> {
   try {
-    const requestData: DeepSeekChatRequest = {
+    const response = await deepseekClient.post('/chat/completions', {
       model,
       messages,
       temperature: 0.7,
-      max_tokens: 1000,
-    };
-
-    const response = await deepseekClient.post<DeepSeekChatResponse>('/chat/completions', requestData);
+      max_tokens: 1500, // 增加 token 数以容纳完整 JSON
+      response_format: { type: 'json_object' } // 关键：强制启用 JSON 模式 (如果 DeepSeek 模型支持)
+    });
     return response.data.choices[0].message.content;
   } catch (error) {
-    console.error('Error calling DeepSeek API:', error);
+    console.error('DeepSeek API Error:', error);
     throw error;
   }
 }
 
-/**
- * 生成食谱推荐
- * @param mood 用户当前心情
- * @param inventory 冰箱库存
- * @param isLazyMode 是否为懒模式（点外卖）
- * @returns 食谱推荐结果
- */
-export async function generateRecipe(
-  mood: string,
-  inventory: string[],
-  isLazyMode: boolean
-): Promise<string> {
-  const systemPrompt = `你是一个专业的情绪营养师，根据用户的心情和冰箱库存，为用户推荐合适的食谱。
-
-规则：
-1. 考虑用户当前的心情，推荐能改善情绪的食物
-2. 优先使用冰箱中的库存食材
-3. 根据是否为懒模式（点外卖）生成不同类型的推荐
-4. 推荐内容要包含食谱名称、卡路里、描述、标签和推荐理由
-5. 输出格式要清晰易读
-6. 使用中文回答`;
+export async function generateRecipe(mood: string, inventory: string[], isLazyMode: boolean): Promise<string> {
+  // 定义严格的 JSON 结构要求
+  const systemPrompt = `你是一个专业的情绪营养师。请根据用户心情和食材生成推荐。
+   
+  必须严格仅返回一个合法的 JSON 对象，不要包含任何 markdown 格式或额外文字。JSON 结构如下：
+  {
+    "science": "一句话科学分析（如：焦虑时皮质醇升高，建议补充...）",
+    "menu": [
+      {
+        "name": "菜名",
+        "cal": 300,
+        "desc": "简短描述（如果是在家做，需包含如何使用库存食材）",
+        "tags": ["标签1", "标签2"],
+        "reason": "为什么这道菜适合当前心情"
+      },
+      {
+        "name": "菜名2",
+        "cal": 400,
+        "desc": "...",
+        "tags": ["..."],
+        "reason": "..."
+      }
+    ]
+  }
+  `;
 
   const userPrompt = `我的心情是：${mood}
-我的冰箱库存有：${inventory.join('、')}
-我现在${isLazyMode ? '想点外卖' : '想自己做饭'}
-请为我推荐合适的食谱。`;
+  我的冰箱库存有：${inventory.length > 0 ? inventory.join('、') : '无（需要购买）'}
+  模式：${isLazyMode ? '点外卖（推荐适合该心情的外卖选项）' : '自己做（优先消耗库存，步骤简单）'}`;
 
   const messages: DeepSeekMessage[] = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
   ];
 
+  // 这里不写死 response_format，因为有些 DeepSeek 版本可能不支持标准 JSON Mode 参数，
+  // 但我们在 System Prompt 里强约束了。
   return chatWithDeepSeek(messages);
 }
