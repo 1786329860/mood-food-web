@@ -315,6 +315,7 @@ export default function MoodFoodWeb() {
           </nav> 
           <div className="flex items-center gap-4"> 
              <div className="hidden sm:flex flex-col items-end mr-1"><span className="text-[10px] text-slate-400 font-bold uppercase">每日目标</span><span className="text-sm font-extrabold text-indigo-600">{targetCal} kcal</span></div> 
+             <button onClick={() => window.location.href = '/auth/signin'} className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">登录</button> 
              <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">U</div> 
           </div> 
         </div> 
