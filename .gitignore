@@ -43,3 +43,7 @@ node_modules/.cache/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# PWA generated files
+public/sw.js
+public/workbox-*
