@@ -56,12 +56,7 @@
       ]
     }
   ],
-  "public": {
-    "enabled": true,
-    "cors": {
-      "origin": "*"
-    }
-  },
+  "public": true,
   "functions": {
     "app/api/**/*": {
       "runtime": "nodejs18.x",
