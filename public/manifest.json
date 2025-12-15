@@ -1,0 +1,42 @@
+{
+  "name": "MoodFood.AI",
+  "short_name": "MoodFood",
+  "description": "情绪饮食健康助手",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["health", "food", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "生成食谱",
+      "short_name": "食谱",
+      "description": "根据心情生成食谱",
+      "url": "/?mode=recipe",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "查看计划",
+      "short_name": "计划",
+      "description": "查看周计划",
+      "url": "/?mode=plan",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
