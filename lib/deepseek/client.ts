@@ -8,13 +8,25 @@
  } 
  
  async function chatWithDeepSeek(messages: DeepSeekMessage[]): Promise<string> { 
-   try { 
-     const response = await axios.post('/api/deepseek', { messages }); 
-     return response.data.content; 
-   } catch (error) { 
-     console.error('DeepSeek API Error:', error); 
-     throw new Error('Failed to fetch from DeepSeek'); 
-   } 
+  try { 
+    const response = await axios.post('/api/deepseek', { messages }); 
+    
+    // 🔴 修复前 (原来的错误写法): 
+    // return response.data.content; 
+    
+    // 🟢 修复后 (正确的 DeepSeek/OpenAI 响应结构): 
+    const aiContent = response.data.choices?.[0]?.message?.content; 
+    
+    if (!aiContent) { 
+      console.error('AI Response Structure:', response.data); // 方便调试 
+      throw new Error('Invalid response from AI provider'); 
+    } 
+
+    return aiContent; 
+  } catch (error) { 
+    console.error('DeepSeek API Error:', error); 
+    throw new Error('Failed to fetch from DeepSeek'); 
+  } 
  } 
  
  /** 
