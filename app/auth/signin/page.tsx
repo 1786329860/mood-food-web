@@ -1,13 +1,13 @@
-// app/auth/signin/page.tsx 
 "use client"; 
 
 import React, { useState } from 'react'; 
-import { supabase } from '../../../utils/supabase'; 
+import { supabase } from '../../../utils/supabase'; // 请确保此路径指向正确的 supabase client 文件，如果报错请改为 '@/lib/supabase/client' 或相对路径 
 import { Mail, ArrowLeft, Loader2, CheckCircle, Globe, ChefHat } from 'lucide-react'; 
-import { useLanguage } from '../../LanguageContext'; // 引入多语言 Hook 
+import { useLanguage } from '../../LanguageContext'; // 引入多语言上下文 
 
 export default function SignIn() { 
-  const { t, locale, setLocale } = useLanguage(); // 获取多语言方法 
+  // [关键] 获取 t (翻译函数) 和 locale (当前语言) 
+  const { t, locale, setLocale } = useLanguage(); 
   
   const [email, setEmail] = useState(''); 
   const [loading, setLoading] = useState(false); 
@@ -17,7 +17,8 @@ export default function SignIn() {
     e.preventDefault(); 
     setLoading(true); 
     
-    // 动态获取当前域名，确保跳转正确 
+    // 获取当前域名，确保验证后跳回正确的地址 
+    // 使用 window.location.origin 自动适配 localhost 和 vercel 域名 
     const redirectTo = `${window.location.origin}/auth/callback`; 
 
     const { error } = await supabase.auth.signInWithOtp({ 
@@ -38,13 +39,14 @@ export default function SignIn() {
   return ( 
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative"> 
       
-      {/* 顶部导航：返回按钮 + 语言切换 */} 
+      {/* 顶部导航栏：返回按钮 + 语言切换 */} 
       <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-10"> 
+        {/* 返回首页 */} 
         <a href="/" className="text-slate-500 hover:text-indigo-600 flex items-center gap-2 transition-colors font-medium"> 
           <ArrowLeft size={20} /> <span className="hidden sm:inline">{t('backToHome')}</span> 
         </a> 
         
-        {/* 语言切换按钮 */} 
+        {/* [关键] 语言切换按钮 */} 
         <button 
           onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')} 
           className="bg-white px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold" 
@@ -58,6 +60,8 @@ export default function SignIn() {
         <div className="mx-auto h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg text-white mb-6"> 
           <ChefHat size={32} /> 
         </div> 
+        
+        {/* [关键修复] 使用 t() 替换硬编码的中文 */} 
         <h2 className="text-3xl font-extrabold text-slate-900 mb-2"> 
           {t('welcomeBack')} 
         </h2> 
