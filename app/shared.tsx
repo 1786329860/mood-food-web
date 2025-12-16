@@ -96,11 +96,11 @@ export interface WeeklyPlanResult {
 
 // 情绪选项配置 (包含图标颜色和组件) 
 export const MOOD_OPTIONS = [ 
-  { label: '焦虑', icon: <CloudRain size={24} />, color: 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' }, 
-  { label: '疲惫', icon: <Battery size={24} />, color: 'bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100' }, 
-  { label: '开心', icon: <Heart size={24} />, color: 'bg-pink-50 text-pink-600 border-pink-200 hover:bg-pink-100' }, 
-  { label: '低落', icon: <Coffee size={24} />, color: 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' }, 
-  { label: '压力大', icon: <Zap size={24} />, color: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' }, 
+  { id: 'mood_anxious', label: '焦虑', icon: <CloudRain size={24} />, color: 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' }, 
+  { id: 'mood_tired', label: '疲惫', icon: <Battery size={24} />, color: 'bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100' }, 
+  { id: 'mood_happy', label: '开心', icon: <Heart size={24} />, color: 'bg-pink-50 text-pink-600 border-pink-200 hover:bg-pink-100' }, 
+  { id: 'mood_sad', label: '低落', icon: <Coffee size={24} />, color: 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' }, 
+  { id: 'mood_stressed', label: '压力大', icon: <Zap size={24} />, color: 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' }, 
 ]; 
 
 // 模拟社区帖子数据 

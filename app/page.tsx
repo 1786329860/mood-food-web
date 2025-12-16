@@ -356,7 +356,8 @@ export default function MoodFoodWeb() {
                   {MOOD_OPTIONS.map((mood) => (
                     <button key={mood.label} onClick={() => setSelectedMood(mood.label as MoodType)} className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${selectedMood === mood.label ? mood.color : 'bg-slate-50 border-transparent hover:bg-slate-100'}`}>
                       {mood.icon}
-                      <span className="text-xs font-bold mt-2">{mood.label}</span>
+                      {/* 修改这里：使用 t(mood.id) 替代 mood.label */}
+                      <span className="text-xs font-bold mt-2">{t(mood.id)}</span>
                     </button>
                   ))}
                 </div>

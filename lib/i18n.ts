@@ -37,6 +37,13 @@ export const translations = {
     saving: '保存中...',
     confirmReset: '确定要重置所有数据吗？这将清空库存和档案，无法恢复。',
     
+    // --- 新增：心情选项 ---
+    mood_anxious: '焦虑',
+    mood_tired: '疲惫',
+    mood_happy: '开心',
+    mood_sad: '低落',
+    mood_stressed: '压力大',
+    
     // --- 新增：登录页面专用词条 ---
     welcomeBack: '欢迎回来',
     loginSlogan: '记录情绪，吃出健康',
@@ -85,6 +92,13 @@ export const translations = {
     loginToManage: 'Login to manage',
     saving: 'Saving...',
     confirmReset: 'Are you sure you want to reset all data? This cannot be undone.',
+
+    // --- New: Mood Options ---
+    mood_anxious: 'Anxious',
+    mood_tired: 'Tired',
+    mood_happy: 'Happy',
+    mood_sad: 'Sad',
+    mood_stressed: 'Stressed',
 
     // --- New: Login Page keys ---
     welcomeBack: 'Welcome Back',
