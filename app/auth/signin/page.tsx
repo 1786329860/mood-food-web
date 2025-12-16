@@ -1,188 +1,140 @@
-'use client';
+// app/auth/signin/page.tsx 
+"use client"; 
 
-import { useState } from 'react';
-import { supabase } from '../../../utils/supabase'; // 确保路径正确，如果不报错就保持原样
-import { useLanguage } from '../../LanguageContext';
+import React, { useState } from 'react'; 
+import { supabase } from '../../../utils/supabase'; 
+import { Mail, ArrowLeft, Loader2, CheckCircle, Globe, ChefHat } from 'lucide-react'; 
+import { useLanguage } from '../../LanguageContext'; // 引入多语言 Hook 
 
-const SignInPage = () => {
-  const { t, locale, setLocale } = useLanguage();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState(''); // 新增：成功提示
-  const [isLoading, setIsLoading] = useState(false);
+export default function SignIn() { 
+  const { t, locale, setLocale } = useLanguage(); // 获取多语言方法 
   
-  // 新增：控制当前是“登录”还是“注册”模式
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState(''); 
+  const [loading, setLoading] = useState(false); 
+  const [sent, setSent] = useState(false); 
 
-  // 获取登录后的回调地址
-  const getCallbackUrl = () => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('callbackUrl') || '/';
-    }
-    return '/';
-  };
+  const handleLogin = async (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    setLoading(true); 
+    
+    // 动态获取当前域名，确保跳转正确 
+    const redirectTo = `${window.location.origin}/auth/callback`; 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMsg('');
-    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({ 
+      email, 
+      options: { 
+        emailRedirectTo: redirectTo, 
+      }, 
+    }); 
 
-    try {
-      const currentCallbackUrl = getCallbackUrl();
+    if (error) { 
+      alert(error.message); 
+    } else { 
+      setSent(true); 
+    } 
+    setLoading(false); 
+  }; 
+
+  return ( 
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative"> 
       
-      if (isSignUp) {
-        // --- 注册逻辑 ---
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`, // 注册后的验证跳转
-          }
-        });
-
-        if (error) {
-          setError(error.message);
-        } else {
-          // Supabase 默认行为：如果需要验证邮箱，data.session 为 null
-          if (data.user && !data.session) {
-            setSuccessMsg(t('registerSuccess'));
-          } else {
-            setSuccessMsg(t('loginSuccess'));
-            window.location.href = currentCallbackUrl;
-          }
-        }
-      } else {
-        // --- 登录逻辑 ---
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          setError(t('operationFailed')); // 模糊化错误信息更安全
-        } else {
-          window.location.href = currentCallbackUrl;
-        }
-      }
-    } catch (err) {
-      setError(t('operationFailed'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-lg p-8 relative">
-        {/* 新增：语言切换按钮 */}
-        <button 
-          onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold uppercase"
-          title="Switch Language"
-        >
-          {locale === 'zh' ? 'EN' : '中'}
-        </button>
+      {/* 顶部导航：返回按钮 + 语言切换 */} 
+      <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-10"> 
+        <a href="/" className="text-slate-500 hover:text-indigo-600 flex items-center gap-2 transition-colors font-medium"> 
+          <ArrowLeft size={20} /> <span className="hidden sm:inline">{t('backToHome')}</span> 
+        </a> 
         
-        <div className="flex items-center justify-center mb-6">
-          <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-md">
-            <span className="text-2xl">🍽️</span>
-          </div>
-          <span className="font-extrabold text-2xl ml-2 text-slate-900">MoodFood<span className="text-indigo-600">.AI</span></span>
-        </div>
+        {/* 语言切换按钮 */} 
+        <button 
+          onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')} 
+          className="bg-white px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold" 
+        > 
+          <Globe size={16} /> 
+          {locale === 'zh' ? 'English' : '中文'} 
+        </button> 
+      </div> 
 
-        {/* 标题随模式改变 */}
-        <h1 className="text-2xl font-bold text-center mb-8">
-          {isSignUp ? t('registerAccount') : t('login')}
-        </h1>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center"> 
+        <div className="mx-auto h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg text-white mb-6"> 
+          <ChefHat size={32} /> 
+        </div> 
+        <h2 className="text-3xl font-extrabold text-slate-900 mb-2"> 
+          {t('welcomeBack')} 
+        </h2> 
+        <p className="text-slate-500 max-w-xs mx-auto"> 
+          {t('loginSlogan')} 
+        </p> 
+      </div> 
 
-        {/* 错误提示 */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
-            {error}
-          </div>
-        )}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md"> 
+        <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-3xl sm:px-10 border border-slate-100"> 
+          {!sent ? ( 
+            <form className="space-y-6" onSubmit={handleLogin}> 
+              <div> 
+                <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-1"> 
+                  {t('emailLabel')} 
+                </label> 
+                <div className="mt-1 relative rounded-md shadow-sm"> 
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"> 
+                    <Mail size={20} /> 
+                  </div> 
+                  <input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    autoComplete="email" 
+                    required 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors outline-none" 
+                    placeholder="name@example.com" 
+                  /> 
+                </div> 
+              </div> 
 
-        {/* 成功提示 */}
-        {successMsg && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
-            {successMsg}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-              {t('emailLabel')}
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              placeholder={t('emailPlaceholder')}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-              {t('passwordLabel')}
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              placeholder={isSignUp ? t('setPasswordPlaceholder') : t('passwordPlaceholder')}
-              minLength={6}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                {/* 这里保留了原本的 Loading SVG */}
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {isSignUp ? t('processing') : t('processing')}
-              </span>
-            ) : (
-              isSignUp ? t('registerNow') : t('loginNow')
-            )}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-slate-600">
-            {isSignUp ? t('hasAccount') : t('noAccount')}
-            {/* 修复点：将 a 标签改为 button，并绑定切换状态的事件 */}
-            <button 
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(''); // 切换时清空错误信息
-                setSuccessMsg('');
-              }} 
-              className="text-indigo-600 font-bold hover:underline ml-1 focus:outline-none"
-            >
-              {isSignUp ? t('toLogin') : t('toRegister')}
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default SignInPage;
+              <div> 
+                <button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 transition-all" 
+                > 
+                  {loading ? ( 
+                    <> 
+                      <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> 
+                      {t('sending')} 
+                    </> 
+                  ) : ( 
+                    t('sendMagicLink') 
+                  )} 
+                </button> 
+              </div> 
+            </form> 
+          ) : ( 
+            <div className="text-center py-6 animate-in fade-in zoom-in duration-300"> 
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"> 
+                <CheckCircle className="h-8 w-8 text-green-600" /> 
+              </div> 
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{t('checkEmail')}</h3> 
+              <p className="text-sm text-slate-500 mb-6"> 
+                {t('magicLinkSent').replace('{email}', email)} 
+              </p> 
+              <div className="bg-slate-50 p-4 rounded-xl text-xs text-slate-500"> 
+                {t('magicLinkTip')} 
+              </div> 
+              <button 
+                onClick={() => setSent(false)} 
+                className="mt-6 text-indigo-600 font-bold text-sm hover:underline" 
+              > 
+                {t('backToHome')} 
+              </button> 
+            </div> 
+          )} 
+        </div> 
+        
+        <div className="mt-8 text-center text-xs text-slate-400"> 
+          {t('copyright')} 
+        </div> 
+      </div> 
+    </div> 
+  ); 
+}
