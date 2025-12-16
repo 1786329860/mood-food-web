@@ -1,39 +1,50 @@
+// lib/deepseek/client.ts
 import axios from 'axios';
 
-const deepseekClient = axios.create({
-  baseURL: 'https://api.deepseek.com/v1',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-  },
-});
-
+// 定义消息类型
 interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
+/**
+ * 核心聊天函数 - 改为调用 Next.js 内部 API
+ */
 export async function chatWithDeepSeek(messages: DeepSeekMessage[], model: string = 'deepseek-chat'): Promise<string> {
   try {
-    const response = await deepseekClient.post('/chat/completions', {
+    // 修改点：请求地址改为本项目内部 API '/api/deepseek'
+    // 不再需要 Authorization 头，因为那是后端的事
+    const response = await axios.post('/api/deepseek', {
       model,
       messages,
       temperature: 0.7,
-      max_tokens: 1500, // 增加 token 数以容纳完整 JSON
-      response_format: { type: 'json_object' } // 关键：强制启用 JSON 模式 (如果 DeepSeek 模型支持)
+      max_tokens: 1500,
+      response_format: { type: 'json_object' } // 尝试强制 JSON
     });
+
+    // 容错处理：确保返回结构正确
+    if (!response.data?.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response structure from AI API');
+    }
+
     return response.data.choices[0].message.content;
   } catch (error) {
-    console.error('DeepSeek API Error:', error);
+    console.error('Client Chat Error:', error);
     throw error;
   }
 }
 
+/**
+ * 生成食谱业务逻辑
+ */
 export async function generateRecipe(mood: string, inventory: string[], isLazyMode: boolean): Promise<string> {
   // 定义严格的 JSON 结构要求
   const systemPrompt = `你是一个专业的情绪营养师。请根据用户心情和食材生成推荐。
    
-  必须严格仅返回一个合法的 JSON 对象，不要包含任何 markdown 格式或额外文字。JSON 结构如下：
+  【重要规则】
+  1. 必须严格仅返回一个合法的 JSON 对象。
+  2. 不要包含任何 markdown 格式（如 \`\`\`json ），不要包含任何额外的文字前缀或后缀。
+  3. JSON 结构必须严格如下：
   {
     "science": "一句话科学分析（如：焦虑时皮质醇升高，建议补充...）",
     "menu": [
@@ -64,7 +75,5 @@ export async function generateRecipe(mood: string, inventory: string[], isLazyMo
     { role: 'user', content: userPrompt },
   ];
 
-  // 这里不写死 response_format，因为有些 DeepSeek 版本可能不支持标准 JSON Mode 参数，
-  // 但我们在 System Prompt 里强约束了。
   return chatWithDeepSeek(messages);
 }
