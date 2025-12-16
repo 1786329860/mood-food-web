@@ -49,6 +49,8 @@ export const translations = {
     backToHome: '返回首页',
     or: '或',
     copyright: '© 2024 MoodFood.AI. All rights reserved.',
+    loginError: '登录出错，请稍后重试',
+    back: '返回'
   },
   en: {
     // --- Existing keys ---
@@ -95,6 +97,8 @@ export const translations = {
     magicLinkTip: 'Click the link in your email to sign in (valid for 1 hour).',
     backToHome: 'Back to Home',
     or: 'or',
-    copyright: '© 2024 MoodFood.AI. All rights reserved.'
+    copyright: '© 2024 MoodFood.AI. All rights reserved.',
+    loginError: 'Login failed, please try again',
+    back: 'Back'
   }
 };

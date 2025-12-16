@@ -125,7 +125,7 @@ export default function SignIn() {
                 onClick={() => setSent(false)} 
                 className="mt-6 text-indigo-600 font-bold text-sm hover:underline" 
               > 
-                {t('backToHome')} 
+                {t('back')} 
               </button> 
             </div> 
           )} 
