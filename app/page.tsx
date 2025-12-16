@@ -151,20 +151,26 @@ export default function MoodFoodWeb() {
     setInventory(inventory.filter(i => i.id !== id));
   };
 
-  const handleGenerate = async () => { /* ... 保留 ... */
+  const handleGenerate = async () => {
     if (!selectedMood) return;
     setIsGenerating(true);
     setGeneratedResult(null);
-
     try {
       const inventoryNames = inventory.map(item => item.name);
-      const aiRawText = await generateRecipeFromAI(selectedMood, inventoryNames, lazyMode);
+      
+      // 🔥 关键修改：传入 locale 参数
+      const aiRawText = await generateRecipeFromAI(
+        selectedMood,
+        inventoryNames,
+        lazyMode,
+        locale // <--- 这里必须传！
+      );
+      
       const jsonString = aiRawText.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsedResult = JSON.parse(jsonString);
-      setGeneratedResult(parsedResult);
+      setGeneratedResult(JSON.parse(jsonString));
     } catch (error) {
-      console.error('AI 生成失败:', error);
-      alert('AI 脑子有点乱，请重试或检查控制台日志');
+      console.error('Error:', error);
+      alert(locale === 'zh' ? 'AI繁忙，请稍后再试' : 'AI Busy, please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -179,13 +185,16 @@ export default function MoodFoodWeb() {
   const handleGeneratePlan = async () => {
     setIsGeneratingPlan(true);
     try {
-      const aiRawText = await generateWeeklyPlan(profile);
+      // 🔥 关键修改：传入 locale 参数
+      const aiRawText = await generateWeeklyPlan(
+        profile,
+        locale // <--- 这里必须传！
+      );
+      
       const jsonString = aiRawText.replace(/```json/g, '').replace(/```/g, '').trim();
-      const result = JSON.parse(jsonString);
-      setWeeklyPlan(result);
+      setWeeklyPlan(JSON.parse(jsonString));
     } catch (error) {
-      console.error("生成计划失败", error);
-      alert("生成计划失败，请重试");
+      console.error("Plan Error", error);
     } finally {
       setIsGeneratingPlan(false);
     }
