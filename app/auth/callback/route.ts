@@ -1,30 +1,46 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get('code');
+  // 如果有 "next" 参数则跳转到指定页，否则回首页
+  const next = searchParams.get('next') ?? '/';
 
   if (code) {
-    // 使用环境变量创建 Supabase 客户端
-    const supabase = createClient(
+    const cookieStore = cookies();
+
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: CookieOptions) {
+            cookieStore.delete({ name, ...options });
+          },
+        },
+      }
     );
-    
-    try {
-      // 关键步骤：使用一次性 Code 换取用户的 Session
-      // 这会自动在浏览器中设置 cookie，保持用户登录状态
-      await supabase.auth.exchangeCodeForSession(code);
-    } catch (error) {
-      console.error('Session exchange failed:', error);
-      // 如果出错，重定向回登录页并带上错误信息
-      return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=CallbackFailed`);
+
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      // 登录成功，重定向回首页 (保留 Cookie)
+      return NextResponse.redirect(`${origin}${next}`);
+    } else {
+      console.error('Auth callback error:', error);
     }
   }
 
-  // 验证成功后，重定向回首页
-  // requestUrl.origin 会自动适配 localhost 或 vercel 域名
-  return NextResponse.redirect(requestUrl.origin);
+  // 登录失败，重定向回登录页并带上错误提示
+  return NextResponse.redirect(`${origin}/auth/signin?error=AuthCallbackError`);
 }
