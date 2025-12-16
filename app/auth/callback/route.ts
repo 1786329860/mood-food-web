@@ -1,18 +1,27 @@
+// app/auth/callback/route.ts
+import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // 如果有 "next" 参数则跳转到指定页，否则回首页
   const next = searchParams.get('next') ?? '/';
+  
+  // 1. 处理错误情况 (如 OTP 过期)
+  const error = searchParams.get('error');
+  if (error) {
+    console.error('Auth Error:', searchParams.get('error_description'));
+    // 重定向回登录页并显示错误
+    return NextResponse.redirect(`${origin}/auth/signin?error=${error}`);
+  }
 
   if (code) {
     const cookieStore = cookies();
 
+    // 2. 初始化服务端客户端 (自动处理 Cookie)
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -31,16 +40,18 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      // 登录成功，重定向回首页 (保留 Cookie)
+    // 3. 交换 Token (自动写入 Cookie)
+    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+    
+    if (!sessionError) {
+      // 登录成功，重定向回首页
       return NextResponse.redirect(`${origin}${next}`);
     } else {
-      console.error('Auth callback error:', error);
+      console.error('Session exchange failed:', sessionError);
+      return NextResponse.redirect(`${origin}/auth/signin?error=SessionExchangeFailed`);
     }
   }
 
-  // 登录失败，重定向回登录页并带上错误提示
-  return NextResponse.redirect(`${origin}/auth/signin?error=AuthCallbackError`);
+  // 无 code 也无 error，异常访问，回首页
+  return NextResponse.redirect(`${origin}/auth/signin`);
 }

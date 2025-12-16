@@ -1,5 +1,6 @@
 // lib/deepseek/client.ts
 import axios from 'axios';
+import { UserProfile } from '../../app/shared'; // 确保引入路径正确
 
 // 定义消息类型
 interface DeepSeekMessage {
@@ -76,4 +77,50 @@ export async function generateRecipe(mood: string, inventory: string[], isLazyMo
   ];
 
   return chatWithDeepSeek(messages);
+}
+
+/**
+ * 新增：生成周计划业务逻辑
+ */
+export async function generateWeeklyPlan(profile: UserProfile): Promise<string> {
+  const systemPrompt = `你是一个专业的健身与饮食规划师。请根据用户的身体档案生成一周(7天)的饮食与运动计划。
+
+  【重要规则】
+  1. 必须严格仅返回一个合法的 JSON 对象。
+  2. 不要包含 markdown 格式，不要包含额外文字。
+  3. JSON 结构必须严格如下：
+  {
+    "summary": "根据用户BMI(${calculateBMI(profile)})和目标(${profile.goal})生成的整体建议...",
+    "schedule": [
+      {
+        "day": "周一",
+        "focus": "简短关键词",
+        "meals": { "breakfast": "...", "lunch": "...", "dinner": "..." },
+        "exercise": "..."
+      },
+      ... (共7天)
+    ]
+  }`;
+
+  const userPrompt = `我的档案：
+  性别：${profile.gender}
+  年龄：${profile.age}
+  身高：${profile.height}cm
+  体重：${profile.weight}kg
+  目标：${profile.goal === 'lose' ? '减脂' : profile.goal === 'gain' ? '增肌' : '保持健康'}
+  活动量系数：${profile.activity}`;
+
+  const messages: { role: 'system' | 'user'; content: string }[] = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ];
+
+  return chatWithDeepSeek(messages);
+}
+
+// 辅助函数：简单的BMI计算用于Prompt中
+function calculateBMI(p: UserProfile) {
+  if (!p.height || !p.weight) return '未知';
+  const h = p.height / 100;
+  return (p.weight / (h * h)).toFixed(1);
 }

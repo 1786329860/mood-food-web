@@ -62,15 +62,32 @@ export interface FoodItem {
   reason?: string; // AI推荐理由 
 } 
 
-export interface DayPlan { 
-  day: string; 
-  totalCal: number; 
-  meals: { 
-    breakfast: FoodItem; 
-    lunch: FoodItem; 
-    dinner: FoodItem; 
-    snack: FoodItem; 
-  }; 
+export interface DayPlan {
+  day: string;
+  totalCal: number;
+  meals: {
+    breakfast: FoodItem;
+    lunch: FoodItem;
+    dinner: FoodItem;
+    snack: FoodItem;
+  };
+}
+
+// --- 新增：周计划相关类型 ---
+export interface WeeklyDayPlan {
+  day: string; // "周一", "周二"...
+  focus: string; // 当日重点 (如：高碳水日 / 休息日)
+  meals: {
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  };
+  exercise: string; // 建议运动
+}
+
+export interface WeeklyPlanResult {
+  summary: string; // 整体计划概述
+  schedule: WeeklyDayPlan[]; // 7天计划
 } 
 
 // ========================================== 
