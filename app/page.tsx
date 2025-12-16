@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles, ChefHat, Brain, Heart, Loader2, Calculator, X,
   Home, Users, TrendingUp, MessageCircle, Send, ShoppingBag,
-  Plus, ArrowRight, Utensils, Calendar, LogOut, User, Save
+  Plus, ArrowRight, Utensils, Calendar, LogOut, User, Save, Globe
 } from 'lucide-react';
 
 import {
@@ -15,8 +15,10 @@ import {
 import { supabase } from '../utils/supabase';
 // 注意：这里我们稍后会修改 client.ts 以支持 JSON 模式
 import { generateRecipe as generateRecipeFromAI } from '../lib/deepseek/client';
+import { useLanguage } from './LanguageContext';
 
 export default function MoodFoodWeb() {
+  const { t, locale, setLocale } = useLanguage();
   // ==========================
   // A. 全局状态
   // ==========================
@@ -197,8 +199,18 @@ export default function MoodFoodWeb() {
           </div>
           
           <div className="flex items-center gap-4">
+            {/* 新增：语言切换按钮 */}
+            <button 
+              onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+              className="p-2 text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold uppercase"
+              title="Switch Language"
+            >
+              <Globe size={18} />
+              {locale === 'zh' ? 'EN' : '中'}
+            </button>
+            
             <div className="hidden sm:flex flex-col items-end mr-1">
-              <span className="text-[10px] text-slate-400 font-bold uppercase">每日目标</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase">{t('dailyTarget')}</span>
               <span className="text-sm font-extrabold text-indigo-600">{targetCal} kcal</span>
             </div>
 
@@ -215,7 +227,7 @@ export default function MoodFoodWeb() {
             ) : (
               // 未登录状态
               <button onClick={() => window.location.href = '/auth/signin'} className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
-                登录 / 注册
+                {t('login')} / {t('register')}
               </button>
             )}
           </div>
@@ -231,13 +243,13 @@ export default function MoodFoodWeb() {
               {/* 身体档案 - 可编辑版 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative group">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold flex gap-2"><Calculator size={18} /> 身体档案</h3>
-                  {isSavingProfile && <span className="text-xs text-indigo-500 animate-pulse">保存中...</span>}
+                  <h3 className="font-bold flex gap-2"><Calculator size={18} /> {t('bodyProfile')}</h3>
+                  {isSavingProfile && <span className="text-xs text-indigo-500 animate-pulse">{t('saving')}</span>}
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="bg-slate-50 p-2 rounded-xl border border-transparent focus-within:border-indigo-300 transition-colors">
-                    <div className="text-slate-400 text-xs font-bold mb-1">体重 (kg)</div>
+                    <div className="text-slate-400 text-xs font-bold mb-1">{t('weight')} (kg)</div>
                     <input
                       type="number"
                       value={profile.weight}
@@ -246,7 +258,7 @@ export default function MoodFoodWeb() {
                     />
                   </div>
                   <div className="bg-slate-50 p-2 rounded-xl border border-transparent focus-within:border-indigo-300 transition-colors">
-                    <div className="text-slate-400 text-xs font-bold mb-1">身高 (cm)</div>
+                    <div className="text-slate-400 text-xs font-bold mb-1">{t('height')} (cm)</div>
                     <input
                       type="number"
                       value={profile.height}
@@ -255,7 +267,7 @@ export default function MoodFoodWeb() {
                     />
                   </div>
                   <div className="bg-slate-50 p-2 rounded-xl border border-transparent focus-within:border-indigo-300 transition-colors">
-                    <div className="text-slate-400 text-xs font-bold mb-1">年龄</div>
+                    <div className="text-slate-400 text-xs font-bold mb-1">{t('age')}</div>
                     <input
                       type="number"
                       value={profile.age}
@@ -271,31 +283,31 @@ export default function MoodFoodWeb() {
                      onChange={(e) => updateProfile({ gender: e.target.value as any })}
                      className="bg-slate-50 text-sm p-2 rounded-lg outline-none"
                    >
-                     <option value="female">女</option>
-                     <option value="male">男</option>
+                     <option value="female">{t('female')}</option>
+                     <option value="male">{t('male')}</option>
                    </select>
                    <select
                      value={profile.goal}
                      onChange={(e) => updateProfile({ goal: e.target.value as any })}
                      className="bg-slate-50 text-sm p-2 rounded-lg outline-none"
                    >
-                     <option value="lose">减脂</option>
-                     <option value="maintain">保持</option>
-                     <option value="gain">增肌</option>
+                     <option value="lose">{t('lose')}</option>
+                     <option value="maintain">{t('maintain')}</option>
+                     <option value="gain">{t('gain')}</option>
                    </select>
                 </div>
                 
                 {!user && <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-3xl">
-                  <span className="text-sm font-bold text-slate-500 bg-white px-3 py-1 rounded shadow">登录后可编辑</span>
+                  <span className="text-sm font-bold text-slate-500 bg-white px-3 py-1 rounded shadow">{t('loginToEdit')}</span>
                 </div>}
               </div>
 
               {/* 冰箱库存 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative">
-                <h3 className="font-bold mb-3 flex gap-2"><ShoppingBag size={18} /> 冰箱库存</h3>
+                <h3 className="font-bold mb-3 flex gap-2"><ShoppingBag size={18} /> {t('fridgeInventory')}</h3>
                 <div className="flex flex-wrap gap-2 mb-4 min-h-[40px]">
                   {inventory.length === 0 ? (
-                    <span className="text-slate-400 text-sm">空空如也，加点什么吧</span>
+                    <span className="text-slate-400 text-sm">{t('inventoryEmpty')}</span>
                   ) : (
                     inventory.map(item => (
                       <span key={item.id} className="px-3 py-1 bg-slate-100 text-xs rounded-full flex gap-1 group items-center">
@@ -312,7 +324,7 @@ export default function MoodFoodWeb() {
                     type="text"
                     value={newIngredient}
                     onChange={(e) => setNewIngredient(e.target.value)}
-                    placeholder="食材..."
+                    placeholder={t('ingredientName')}
                     className="flex-1 text-sm bg-slate-50 border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-100"
                   />
                   <button
@@ -323,16 +335,16 @@ export default function MoodFoodWeb() {
                   </button>
                 </div>
                 {!user && <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-3xl">
-                  <span className="text-sm font-bold text-slate-500 bg-white px-3 py-1 rounded shadow">登录后管理库存</span>
+                  <span className="text-sm font-bold text-slate-500 bg-white px-3 py-1 rounded shadow">{t('loginToManage')}</span>
                 </div>}
               </div>
 
               {/* 生成控制台 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg">
-                <h2 className="text-2xl font-extrabold mb-2">此刻心情如何？</h2>
+                <h2 className="text-2xl font-extrabold mb-2">{t('moodQuestion')}</h2>
                 <div className="bg-slate-100 p-1 rounded-xl flex mb-6">
-                  <button onClick={() => setLazyMode(false)} className={`flex-1 py-2 rounded-lg text-sm font-bold ${!lazyMode ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}>自己做</button>
-                  <button onClick={() => setLazyMode(true)} className={`flex-1 py-2 rounded-lg text-sm font-bold ${lazyMode ? 'bg-white shadow text-orange-500' : 'text-slate-400'}`}>点外卖</button>
+                  <button onClick={() => setLazyMode(false)} className={`flex-1 py-2 rounded-lg text-sm font-bold ${!lazyMode ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}>{t('cooking')}</button>
+                  <button onClick={() => setLazyMode(true)} className={`flex-1 py-2 rounded-lg text-sm font-bold ${lazyMode ? 'bg-white shadow text-orange-500' : 'text-slate-400'}`}>{t('delivery')}</button>
                 </div>
                 <div className="grid grid-cols-3 gap-3 mb-6">
                   {MOOD_OPTIONS.map((mood) => (
@@ -344,7 +356,7 @@ export default function MoodFoodWeb() {
                 </div>
                 <button onClick={handleGenerate} disabled={isGenerating || !selectedMood} className={`w-full py-4 rounded-xl font-bold text-white shadow-xl flex justify-center gap-2 transition-transform active:scale-95 ${lazyMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-indigo-600 hover:bg-indigo-700'} disabled:opacity-50`}>
                   {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
-                  {isGenerating ? 'AI 正在思考...' : '生成治愈菜单'}
+                  {isGenerating ? t('generating') : t('generateBtn')}
                 </button>
               </div>
             </div>
@@ -357,7 +369,7 @@ export default function MoodFoodWeb() {
                   <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl flex gap-4">
                     <div className="bg-white p-3 rounded-2xl h-fit text-indigo-600"><Brain size={24} /></div>
                     <div>
-                      <h4 className="font-bold text-indigo-900 mb-1">AI 情绪营养分析</h4>
+                      <h4 className="font-bold text-indigo-900 mb-1">{t('aiAnalysis')}</h4>
                       <p className="text-sm text-indigo-900/80 leading-relaxed">{generatedResult.science}</p>
                     </div>
                   </div>
@@ -376,7 +388,7 @@ export default function MoodFoodWeb() {
                             </div>
                             <p className="text-sm text-slate-500 mb-3">{item.desc}</p>
                             <div className="flex items-center gap-1.5 text-xs text-indigo-600 bg-indigo-50 w-fit px-3 py-1.5 rounded-lg">
-                              <Sparkles size={14} /> 推荐理由：{item.reason}
+                              <Sparkles size={14} /> {t('recommendReason')}：{item.reason}
                             </div>
                           </div>
                           <div className="text-2xl font-extrabold text-slate-700">{item.cal}<span className="text-xs font-normal text-slate-400 ml-1">kcal</span></div>
@@ -384,7 +396,7 @@ export default function MoodFoodWeb() {
                         <div className="mt-6 pt-4 border-t border-slate-50 flex justify-between opacity-80">
                           <button className="text-slate-400 hover:text-red-500 transition-colors"><Heart size={20} /></button>
                           <button className="text-sm font-bold text-indigo-600 flex items-center gap-1 hover:underline">
-                            {lazyMode ? '去美团搜索' : '查看详细做法'} <ArrowRight size={16} />
+                            {lazyMode ? t('searchDelivery') : t('viewRecipe')} <ArrowRight size={16} />
                           </button>
                         </div>
                       </div>
@@ -394,7 +406,7 @@ export default function MoodFoodWeb() {
               ) : (
                 <div className="h-full bg-white/50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 min-h-[500px]">
                   <div className="bg-slate-100 p-6 rounded-full mb-4 text-slate-300"><Utensils size={40} /></div>
-                  <p>选择心情，等待 AI 投喂...</p>
+                  <p>{t('waitingForAi')}</p>
                 </div>
               )}
             </div>

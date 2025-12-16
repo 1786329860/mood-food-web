@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { supabase } from '../../../utils/supabase'; // 确保路径正确，如果不报错就保持原样
+import { useLanguage } from '../../LanguageContext';
 
 const SignInPage = () => {
+  const { t, locale, setLocale } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -46,9 +48,9 @@ const SignInPage = () => {
         } else {
           // Supabase 默认行为：如果需要验证邮箱，data.session 为 null
           if (data.user && !data.session) {
-            setSuccessMsg('注册成功！请前往您的邮箱查收验证邮件。');
+            setSuccessMsg(t('registerSuccess'));
           } else {
-            setSuccessMsg('注册并登录成功！正在跳转...');
+            setSuccessMsg(t('loginSuccess'));
             window.location.href = currentCallbackUrl;
           }
         }
@@ -60,13 +62,13 @@ const SignInPage = () => {
         });
 
         if (error) {
-          setError('邮箱或密码错误，请重试'); // 模糊化错误信息更安全
+          setError(t('operationFailed')); // 模糊化错误信息更安全
         } else {
           window.location.href = currentCallbackUrl;
         }
       }
     } catch (err) {
-      setError('发生意外错误，请稍后重试');
+      setError(t('operationFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +76,16 @@ const SignInPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-lg p-8">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-lg p-8 relative">
+        {/* 新增：语言切换按钮 */}
+        <button 
+          onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 text-xs font-bold uppercase"
+          title="Switch Language"
+        >
+          {locale === 'zh' ? 'EN' : '中'}
+        </button>
+        
         <div className="flex items-center justify-center mb-6">
           <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-md">
             <span className="text-2xl">🍽️</span>
@@ -84,7 +95,7 @@ const SignInPage = () => {
 
         {/* 标题随模式改变 */}
         <h1 className="text-2xl font-bold text-center mb-8">
-          {isSignUp ? '注册新账号' : '登录您的账号'}
+          {isSignUp ? t('registerAccount') : t('login')}
         </h1>
 
         {/* 错误提示 */}
@@ -104,7 +115,7 @@ const SignInPage = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-              邮箱
+              {t('emailLabel')}
             </label>
             <input
               type="email"
@@ -112,14 +123,14 @@ const SignInPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              placeholder="请输入邮箱"
+              placeholder={t('emailPlaceholder')}
               required
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-              密码
+              {t('passwordLabel')}
             </label>
             <input
               type="password"
@@ -127,7 +138,7 @@ const SignInPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-              placeholder={isSignUp ? "请设置您的密码 (至少6位)" : "请输入密码"}
+              placeholder={isSignUp ? t('setPasswordPlaceholder') : t('passwordPlaceholder')}
               minLength={6}
               required
             />
@@ -145,17 +156,17 @@ const SignInPage = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {isSignUp ? '注册中...' : '登录中...'}
+                {isSignUp ? t('processing') : t('processing')}
               </span>
             ) : (
-              isSignUp ? '立即注册' : '登录'
+              isSignUp ? t('registerNow') : t('loginNow')
             )}
           </button>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-sm text-slate-600">
-            {isSignUp ? '已有账号？' : '还没有账号？'}
+            {isSignUp ? t('hasAccount') : t('noAccount')}
             {/* 修复点：将 a 标签改为 button，并绑定切换状态的事件 */}
             <button 
               onClick={() => {
@@ -165,7 +176,7 @@ const SignInPage = () => {
               }} 
               className="text-indigo-600 font-bold hover:underline ml-1 focus:outline-none"
             >
-              {isSignUp ? '去登录' : '去注册'}
+              {isSignUp ? t('toLogin') : t('toRegister')}
             </button>
           </p>
         </div>
