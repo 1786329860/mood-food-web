@@ -48,6 +48,7 @@ export default function SignIn() {
         
         {/* [关键] 语言切换按钮 */} 
         <button 
+          type="button"  // <--- 关键修改：防止按钮触发页面刷新/表单提交 
           onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')} 
           className="bg-white px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold" 
         > 

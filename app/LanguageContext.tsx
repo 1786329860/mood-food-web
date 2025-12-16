@@ -1,7 +1,7 @@
-// app/LanguageContext.tsx
+// app/LanguageContext.tsx 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react'; 
 import { translations, Locale } from '@/lib/i18n';
 
 interface LanguageContextType {
@@ -10,7 +10,6 @@ interface LanguageContextType {
   t: (key: keyof typeof translations['zh']) => string;
 }
 
-// 提供默认值，避免服务器端渲染时出错
 const defaultContextValue: LanguageContextType = {
   locale: 'zh',
   setLocale: () => {},
@@ -20,16 +19,19 @@ const defaultContextValue: LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType>(defaultContextValue);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('zh'); // 默认中文
-  const [isInitialized, setIsInitialized] = useState(false);
+  // 1. 尝试直接从 localStorage 初始化 state (避免 Hydration Mismatch 的闪烁)
+  // 注意：在服务端渲染时 localStorage 不存在，所以需要判断
+  const [locale, setLocaleState] = useState<Locale>('zh');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // 1. 优先读取本地存储
+    setMounted(true);
+    // 页面加载时读取偏好
     const savedLocale = localStorage.getItem('app-locale') as Locale;
     if (savedLocale && (savedLocale === 'zh' || savedLocale === 'en')) {
       setLocaleState(savedLocale);
     } else {
-      // 2. 其次检测浏览器语言
+      // 如果没有本地存储，检测浏览器
       const browserLang = navigator.language.toLowerCase();
       if (browserLang.startsWith('zh')) {
         setLocaleState('zh');
@@ -37,7 +39,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setLocaleState('en');
       }
     }
-    setIsInitialized(true);
   }, []);
 
   const setLocale = (newLocale: Locale) => {
@@ -45,12 +46,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('app-locale', newLocale);
   };
 
-  // 翻译函数 hook
   const t = (key: keyof typeof translations['zh']) => {
-    return translations[locale][key] || key;
+    // 确保 translations[locale] 存在，防止崩溃
+    const dict = translations[locale] || translations['zh'];
+    return dict[key] || key;
   };
 
-  // 使用默认值作为初始值，确保在所有情况下都有上下文
+  // 避免服务端渲染内容与客户端不一致导致的 Hydration 警告
+  // 在 mounted 之前渲染 null 或者默认语言结构
+  if (!mounted) {
+    return (
+      <LanguageContext.Provider value={{ locale: 'zh', setLocale, t }}>
+         {children}
+      </LanguageContext.Provider>
+    );
+  }
+
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t }}>
       {children}
@@ -58,7 +69,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// 自定义 Hook 方便调用
 export const useLanguage = () => {
   return useContext(LanguageContext);
 };
