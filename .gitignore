@@ -31,6 +31,7 @@ node_modules/.cache/
 .vscode/*
 !.vscode/extensions.json
 .idea
+.trae
 *.suo
 *.ntvs*
 *.njsproj
@@ -43,6 +44,12 @@ node_modules/.cache/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# PM2 ecosystem config (contains secrets)
+ecosystem.config.js
+
+# SQLite database
+/data/
 
 # PWA generated files
 public/sw.js

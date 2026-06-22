@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles, ChefHat, Brain, Heart, Loader2, Calculator, X,
-  Home, Users, TrendingUp, MessageCircle, Send, ShoppingBag,
-  Plus, ArrowRight, Utensils, Calendar, LogOut, User, Save, Globe,
-  Info, CheckCircle2 // 新增图标
+  TrendingUp, ShoppingBag, Plus, ArrowRight, Utensils, Calendar,
+  LogOut, Globe
 } from 'lucide-react';
 
 import {
@@ -13,9 +12,7 @@ import {
   MOOD_OPTIONS, WeeklyPlanResult // 引入新类型
 } from './shared';
 
-import { supabase } from '../utils/supabase';
-// 引入新增加的 generateWeeklyPlan
-import { generateRecipe as generateRecipeFromAI, generateWeeklyPlan } from '../lib/deepseek/client';
+import { generateRecipe as generateRecipeFromAI, generateWeeklyPlan } from '@/lib/deepseek/client';
 import { useLanguage } from './LanguageContext';
 
 export default function MoodFoodWeb() {
@@ -38,6 +35,10 @@ export default function MoodFoodWeb() {
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlanResult | null>(null);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
+  // --- 食谱详情弹窗状态 ---
+  const [recipeModalOpen, setRecipeModalOpen] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
+
   // ... (保留原有的 inventory, lazyMode, generatedResult 等状态)
   const [targetCal, setTargetCal] = useState(0);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -50,41 +51,35 @@ export default function MoodFoodWeb() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedResult, setGeneratedResult] = useState<any>(null);
 
-  // ... (保留 useEffect 监听登录状态)
+  // 初始化：检查登录状态并加载数据
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) {
-        fetchProfile(user.id);
-        fetchInventory(user.id);
-      }
-    });
-    // ... (保留 auth 监听)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-          fetchInventory(session.user.id);
-        } else {
-          // 退出后重置为默认
-          setProfile({ age: 25, height: 165, weight: 60, gender: 'female', activity: 1.375, goal: 'lose' });
-          setInventory([]);
-          setGeneratedResult(null);
-          setWeeklyPlan(null); // 重置计划
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then(({ user }) => {
+        if (user) {
+          setUser(user);
+          fetchProfile();
+          fetchInventory();
         }
-      });
-      return () => subscription.unsubscribe();
+      })
+      .catch(() => {});
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data) setProfile(data as UserProfile);
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch('/api/profile');
+      const { profile: data } = await res.json();
+      if (data) setProfile(data as UserProfile);
+    } catch {}
   };
-  
-  const fetchInventory = async (userId: string) => { /* ... 保留原逻辑 ... */
+
+  const fetchInventory = async () => {
     setIsLoadingInventory(true);
-    const { data } = await supabase.from('inventory').select('*').eq('user_id', userId);
-    if (data) setInventory(data as InventoryItem[]);
+    try {
+      const res = await fetch('/api/inventory');
+      const { items } = await res.json();
+      if (items) setInventory(items as InventoryItem[]);
+    } catch {}
     setIsLoadingInventory(false);
   };
 
@@ -114,41 +109,49 @@ export default function MoodFoodWeb() {
     }
   }, [profile]);
 
-  // ... (保留 updateProfile, addInventory, removeInventory, handleGenerate, handleLogout)
-  const updateProfile = async (updates: Partial<UserProfile>) => { /* ... 保留 ... */
+  const updateProfile = async (updates: Partial<UserProfile>) => {
     const newProfile = { ...profile, ...updates };
     setProfile(newProfile);
 
     if (user) {
       setIsSavingProfile(true);
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
-        ...newProfile,
-        updated_at: new Date().toISOString()
-      });
+      try {
+        await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+      } catch {}
       setIsSavingProfile(false);
-      if (error) console.error('保存失败:', error);
     }
   };
 
-  const addInventory = async () => { /* ... 保留 ... */
+  const addInventory = async () => {
     if (!newIngredient.trim() || !user) return;
-    const { data, error } = await supabase.from('inventory').insert({
-      user_id: user.id,
-      name: newIngredient.trim(),
-      quantity: newIngredientQuantity.trim() || '1'
-    }).select();
-
-    if (data) {
-      setInventory([...inventory, data[0] as InventoryItem]);
-      setNewIngredient('');
-      setNewIngredientQuantity('');
-    }
+    try {
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newIngredient.trim(), quantity: newIngredientQuantity.trim() || '1' }),
+      });
+      const { item } = await res.json();
+      if (item) {
+        setInventory([...inventory, item as InventoryItem]);
+        setNewIngredient('');
+        setNewIngredientQuantity('');
+      }
+    } catch {}
   };
 
-  const removeInventory = async (id: string) => { /* ... 保留 ... */
-    await supabase.from('inventory').delete().eq('id', id);
-    setInventory(inventory.filter(i => i.id !== id));
+  const removeInventory = async (id: string) => {
+    try {
+      await fetch('/api/inventory', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      setInventory(inventory.filter((i) => i.id !== id));
+    } catch {}
   };
 
   const handleGenerate = async () => {
@@ -176,9 +179,9 @@ export default function MoodFoodWeb() {
     }
   };
 
-  const handleLogout = async () => { /* ... 保留 ... */
-    await supabase.auth.signOut();
-    window.location.reload();
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/';
   };
 
   // --- 新增：处理生成周计划 ---
@@ -200,11 +203,10 @@ export default function MoodFoodWeb() {
     }
   };
 
-  // --- 新增：处理“查看详细做法”点击 ---
+  // --- 处理”查看详细做法”点击 ---
   const handleViewRecipe = (item: any) => {
-    // 简单实现：弹窗显示详细信息
-    // 这里的 item.desc 通常包含了做法简介，如果需要更详细步骤，可能需要再次调用 AI
-    alert(`【${item.name}】\n\n${item.desc}\n\n推荐理由：${item.reason}`);
+    setSelectedRecipe(item);
+    setRecipeModalOpen(true);
   };
 
   return (
@@ -244,7 +246,7 @@ export default function MoodFoodWeb() {
                 </button>
               </div>
             ) : (
-              <button onClick={() => window.location.href = '/auth/signin'} className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
+              <button onClick={() => window.location.href = '/auth/signup'} className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
                 {t('login')} / {t('register')}
               </button>
             )}
@@ -303,14 +305,14 @@ export default function MoodFoodWeb() {
                         onChange={(e) => updateProfile({ goal: e.target.value as any })}
                         className={`w-full bg-slate-50 text-sm p-2 rounded-lg outline-none border ${recommendedGoal && recommendedGoal !== profile.goal ? 'border-orange-300' : 'border-transparent'}`}
                      >
-                       <option value="lose">{t('lose')} {recommendedGoal === 'lose' ? '(推荐)' : ''}</option>
-                       <option value="maintain">{t('maintain')} {recommendedGoal === 'maintain' ? '(推荐)' : ''}</option>
-                       <option value="gain">{t('gain')} {recommendedGoal === 'gain' ? '(推荐)' : ''}</option>
+                       <option value="lose">{t('lose')} {recommendedGoal === 'lose' ? t('recommended') : ''}</option>
+                       <option value="maintain">{t('maintain')} {recommendedGoal === 'maintain' ? t('recommended') : ''}</option>
+                       <option value="gain">{t('gain')} {recommendedGoal === 'gain' ? t('recommended') : ''}</option>
                      </select>
                      {/* 推荐提示 */}
                      {recommendedGoal && recommendedGoal !== profile.goal && (
                         <div className="absolute -top-6 right-0 bg-orange-100 text-orange-600 text-[10px] px-2 py-0.5 rounded shadow-sm flex items-center animate-bounce">
-                           建议选择: {t(recommendedGoal)}
+                           {t('suggestChoose')}: {t(recommendedGoal)}
                         </div>
                      )}
                    </div>
@@ -425,12 +427,16 @@ export default function MoodFoodWeb() {
           </div>
         )}
         
-        {/* ================= PLAN TAB (新增功能) ================= */}
+        {/* ================= PLAN TAB ================= */}
         {activeTab === 'plan' && (
            <div className="animate-in fade-in max-w-4xl mx-auto">
              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 mb-8 text-center">
-                <h2 className="text-2xl font-bold mb-2">您的{profile.goal === 'lose' ? '减脂' : profile.goal === 'gain' ? '增肌' : '保持'}周期计划</h2>
-                <p className="text-slate-500 mb-6">基于您的身体档案（BMI: {bmiValue || '-'}）与目标为您定制</p>
+                <h2 className="text-2xl font-bold mb-2">
+                  {t('yourPlan').replace('{goal}', profile.goal === 'lose' ? t('goalLose') : profile.goal === 'gain' ? t('goalGain') : t('goalMaintain'))}
+                </h2>
+                <p className="text-slate-500 mb-6">
+                  {t('planSubtitle').replace('{bmi}', bmiValue || '-')}
+                </p>
                 
                 <button 
                   onClick={handleGeneratePlan}
@@ -438,9 +444,9 @@ export default function MoodFoodWeb() {
                   className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
                 >
                   {isGeneratingPlan ? <Loader2 className="animate-spin" /> : <Calendar size={20} />}
-                  {isGeneratingPlan ? '正在生成计划...' : '生成本周计划'}
+                  {isGeneratingPlan ? t('generatingPlan') : t('generatePlan')}
                 </button>
-                {!user && <p className="text-xs text-red-400 mt-2">请先登录以保存和生成计划</p>}
+                {!user && <p className="text-xs text-red-400 mt-2">{t('loginToPlan')}</p>}
              </div>
 
              {weeklyPlan && (
@@ -448,7 +454,7 @@ export default function MoodFoodWeb() {
                  {/* 计划概述 */}
                  <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl">
                     <h3 className="font-bold text-indigo-900 flex items-center gap-2 mb-2">
-                      <Brain size={20}/> AI 建议
+                      <Brain size={20}/> {t('aiAdvice')}
                     </h3>
                     <p className="text-indigo-800/80 text-sm leading-relaxed">{weeklyPlan.summary}</p>
                  </div>
@@ -463,20 +469,20 @@ export default function MoodFoodWeb() {
                         </div>
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-1">
-                            <span className="text-xs font-bold text-slate-400 uppercase">早餐</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase">{t('breakfast')}</span>
                             <p className="text-sm font-medium text-slate-700">{day.meals.breakfast}</p>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-xs font-bold text-slate-400 uppercase">午餐</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase">{t('lunch')}</span>
                             <p className="text-sm font-medium text-slate-700">{day.meals.lunch}</p>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-xs font-bold text-slate-400 uppercase">晚餐</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase">{t('dinner')}</span>
                             <p className="text-sm font-medium text-slate-700">{day.meals.dinner}</p>
                           </div>
                         </div>
                         <div className="md:w-48 flex-shrink-0 border-l border-slate-100 md:pl-6 flex flex-col justify-center">
-                           <span className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><TrendingUp size={12}/> 运动建议</span>
+                           <span className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><TrendingUp size={12}/> {t('exerciseAdvice')}</span>
                            <p className="text-sm text-slate-600">{day.exercise}</p>
                         </div>
                      </div>
@@ -491,10 +497,43 @@ export default function MoodFoodWeb() {
         {(activeTab === 'community' || activeTab === 'progress') && (
            <div className="text-center py-20 text-slate-400">
              <div className="inline-block p-4 bg-slate-100 rounded-full mb-4"><Sparkles size={32}/></div>
-             <p>社区与进度功能即将上线</p>
+             <p>{t('comingSoon')}</p>
            </div>
         )}
       </main>
+
+      {/* ================= 食谱详情弹窗 ================= */}
+      {recipeModalOpen && selectedRecipe && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setRecipeModalOpen(false)}>
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl relative animate-in fade-in" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setRecipeModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+              <X size={20} />
+            </button>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">{selectedRecipe.name}</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">{selectedRecipe.cal} kcal</span>
+              {selectedRecipe.tags?.map((tag: string) => (
+                <span key={tag} className="text-[10px] font-bold px-2 py-1 rounded border uppercase bg-slate-50 text-slate-500">{tag}</span>
+              ))}
+            </div>
+            <p className="text-slate-600 mb-4">{selectedRecipe.desc}</p>
+            {selectedRecipe.reason && (
+              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-4">
+                <p className="text-sm text-indigo-800"><span className="font-bold">{t('recommendReason')}：</span>{selectedRecipe.reason}</p>
+              </div>
+            )}
+            {selectedRecipe.recipe_detail && (
+              <div className="bg-slate-50 p-4 rounded-xl">
+                <h4 className="font-bold text-sm text-slate-700 mb-2">{t('recipeDetail')}</h4>
+                <p className="text-sm text-slate-600 whitespace-pre-line">{selectedRecipe.recipe_detail}</p>
+              </div>
+            )}
+            <button onClick={() => setRecipeModalOpen(false)} className="mt-6 w-full py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-colors">
+              {t('close')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

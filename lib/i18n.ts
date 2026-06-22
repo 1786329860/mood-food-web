@@ -44,19 +44,55 @@ export const translations = {
     mood_sad: '低落',
     mood_stressed: '压力大',
     
-    // --- 新增：登录页面专用词条 ---
+    // --- 新增：周计划 ---
+    yourPlan: '您的{goal}周期计划',
+    planSubtitle: '基于您的身体档案（BMI: {bmi}）与目标为您定制',
+    generatePlan: '生成本周计划',
+    generatingPlan: '正在生成计划...',
+    loginToPlan: '请先登录以保存和生成计划',
+    aiAdvice: 'AI 建议',
+    breakfast: '早餐',
+    lunch: '午餐',
+    dinner: '晚餐',
+    exerciseAdvice: '运动建议',
+    goalLose: '减脂',
+    goalGain: '增肌',
+    goalMaintain: '保持',
+    
+    // --- 新增：社区占位 ---
+    comingSoon: '社区与进度功能即将上线',
+    
+    // --- 新增：食谱详情弹窗 ---
+    recipeDetail: '详细做法',
+    close: '关闭',
+    
+    // --- 新增：推荐目标提示 ---
+    recommended: '(推荐)',
+    suggestChoose: '建议选择',
+
+    // --- 注册/登录页面 ---
     welcomeBack: '欢迎回来',
     loginSlogan: '记录情绪，吃出健康',
+    createAccount: '创建账号',
+    registerSlogan: '开启你的情绪饮食之旅',
     emailLabel: '邮箱地址',
-    sendMagicLink: '发送登录链接',
-    sending: '发送中...',
-    checkEmail: '请查收邮件',
-    magicLinkSent: '我们已向 {email} 发送了登录链接！',
-    magicLinkTip: '请点击邮件中的链接完成登录（链接有效期1小时）。',
+    password: '密码',
+    passwordPlaceholder: '至少 6 位',
+    verificationCode: '验证码',
+    sendCode: '发送验证码',
+    resendCode: '重新发送',
+    loginFailed: '登录失败，请稍后重试',
+    registerFailed: '注册失败，请稍后重试',
+    sendCodeFailed: '发送验证码失败',
+    enterValidEmail: '请输入有效的邮箱地址',
+    enterCode: '请输入 6 位验证码',
+    passwordTooShort: '密码至少 6 个字符',
+    alreadyHaveAccount: '已有账号？',
+    noAccount: '还没有账号？',
+    goLogin: '立即登录',
+    goRegister: '立即注册',
     backToHome: '返回首页',
-    or: '或',
-    copyright: '© 2024 MoodFood.AI. All rights reserved.',
-    loginError: '登录出错，请稍后重试',
+    copyright: '© 2026 MoodFood.AI. All rights reserved.',
     back: '返回'
   },
   en: {
@@ -100,19 +136,55 @@ export const translations = {
     mood_sad: 'Sad',
     mood_stressed: 'Stressed',
 
-    // --- New: Login Page keys ---
+    // --- New: Weekly Plan ---
+    yourPlan: 'Your {goal} Weekly Plan',
+    planSubtitle: 'Customized based on your profile (BMI: {bmi}) and goals',
+    generatePlan: 'Generate Weekly Plan',
+    generatingPlan: 'Generating plan...',
+    loginToPlan: 'Please log in to save and generate plans',
+    aiAdvice: 'AI Advice',
+    breakfast: 'Breakfast',
+    lunch: 'Lunch',
+    dinner: 'Dinner',
+    exerciseAdvice: 'Exercise',
+    goalLose: 'Fat Loss',
+    goalGain: 'Muscle Gain',
+    goalMaintain: 'Maintain',
+    
+    // --- New: Community placeholder ---
+    comingSoon: 'Community & progress features coming soon',
+    
+    // --- New: Recipe detail modal ---
+    recipeDetail: 'Recipe Details',
+    close: 'Close',
+    
+    // --- New: Recommended goal ---
+    recommended: '(Recommended)',
+    suggestChoose: 'Suggested',
+
+    // --- Auth pages ---
     welcomeBack: 'Welcome Back',
     loginSlogan: 'Track mood, eat healthy',
+    createAccount: 'Create Account',
+    registerSlogan: 'Start your emotional eating journey',
     emailLabel: 'Email Address',
-    sendMagicLink: 'Send Login Link',
-    sending: 'Sending...',
-    checkEmail: 'Check Your Email',
-    magicLinkSent: 'We sent a login link to {email}!',
-    magicLinkTip: 'Click the link in your email to sign in (valid for 1 hour).',
+    password: 'Password',
+    passwordPlaceholder: 'At least 6 characters',
+    verificationCode: 'Verification Code',
+    sendCode: 'Send Code',
+    resendCode: 'Resend',
+    loginFailed: 'Login failed, please try again',
+    registerFailed: 'Registration failed, please try again',
+    sendCodeFailed: 'Failed to send code',
+    enterValidEmail: 'Please enter a valid email',
+    enterCode: 'Please enter the 6-digit code',
+    passwordTooShort: 'Password must be at least 6 characters',
+    alreadyHaveAccount: 'Already have an account?',
+    noAccount: "Don't have an account?",
+    goLogin: 'Log in',
+    goRegister: 'Sign up',
     backToHome: 'Back to Home',
-    or: 'or',
-    copyright: '© 2024 MoodFood.AI. All rights reserved.',
-    loginError: 'Login failed, please try again',
+    copyright: '© 2026 MoodFood.AI. All rights reserved.',
     back: 'Back'
   }
 };

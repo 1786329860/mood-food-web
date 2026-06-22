@@ -1,14 +1,7 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-})
-
 const nextConfig = {
   reactStrictMode: true,
-  // PWA 配置
+  output: 'standalone',
   env: {
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'MoodFood.AI',
     NEXT_PUBLIC_APP_SHORT_NAME: process.env.NEXT_PUBLIC_APP_SHORT_NAME || 'MoodFood',
@@ -17,4 +10,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withPWA(nextConfig)
+module.exports = nextConfig
